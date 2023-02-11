@@ -1,4 +1,4 @@
-package kitchen_sink
+package sse
 
 import (
 	"github.com/gin-gonic/gin"
