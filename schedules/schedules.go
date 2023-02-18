@@ -7,6 +7,8 @@ import (
 
 type Schedule interface {
 	IsActive() bool
+	GetTimeUntilStart() time.Duration
+	GetTimeUntilEnd() time.Duration
 }
 
 type WeekdaySchedule struct {
@@ -36,7 +38,7 @@ func GetNow() time.Time {
 	return time.Now().In(location)
 }
 
-func (s *WeekdaySchedule) IsActiveToday() bool {
+func (s WeekdaySchedule) IsActiveToday() bool {
 	weekdayToday := GetNow().Weekday()
 
 	for _, v := range s.Weekdays {
@@ -48,7 +50,19 @@ func (s *WeekdaySchedule) IsActiveToday() bool {
 	return false
 }
 
-func (s *WeekdaySchedule) ToAbsoluteSchedule() (*AbsoluteSchedule, error) {
+func (s WeekdaySchedule) NextExecutionDay() time.Weekday {
+	weekdayToday := GetNow().Weekday()
+
+	for _, v := range s.Weekdays {
+		if v == weekdayToday {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s WeekdaySchedule) ToAbsoluteSchedule() (*AbsoluteSchedule, error) {
 	if !s.IsActiveToday() {
 		return nil, errors.New("schedule is not active today")
 	}
@@ -63,7 +77,7 @@ func (s *WeekdaySchedule) ToAbsoluteSchedule() (*AbsoluteSchedule, error) {
 	return &absoluteSchedule, nil
 }
 
-func (s *WeekdaySchedule) IsActive() bool {
+func (s WeekdaySchedule) IsActive() bool {
 	absoluteSchedule, err := s.ToAbsoluteSchedule()
 	if err != nil {
 		return false
@@ -71,20 +85,30 @@ func (s *WeekdaySchedule) IsActive() bool {
 	return absoluteSchedule.IsActive()
 }
 
-func (s *AbsoluteSchedule) IsActive() bool {
+func (s WeekdaySchedule) GetTimeUntilStart() time.Duration {
+	return s.Start.Sub(GetNow())
+}
+
+func (s WeekdaySchedule) GetTimeUntilEnd() time.Duration {
+	return s.End.Sub(GetNow())
+}
+
+func (s AbsoluteSchedule) IsActive() bool {
 	nowLocal := GetNow()
 	return s.Start.Before(nowLocal) && s.End.After(nowLocal)
 }
 
-func (s *AbsoluteSchedule) GetTimeUntilStart() time.Duration {
+func (s AbsoluteSchedule) GetTimeUntilStart() time.Duration {
 	return s.Start.Sub(GetNow())
 }
 
-func (s *AbsoluteSchedule) GetTimeUntilEnd() time.Duration {
+func (s AbsoluteSchedule) GetTimeUntilEnd() time.Duration {
 	return s.End.Sub(GetNow())
 }
 
 func GetActiveSchedules(schedules []Schedule) []Schedule {
+	var _ Schedule = AbsoluteSchedule{}
+
 	var activeSchedules []Schedule
 	for _, s := range schedules {
 		if s.IsActive() {
