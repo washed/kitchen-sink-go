@@ -28,11 +28,11 @@ func GetMQTTOpts() *MQTT.ClientOptions {
 	}
 
 	mqttOpts.OnConnectionLost = func(cl MQTT.Client, err error) {
-		log.Err(err).Msg("MQTT connection lost")
+		log.Panic().Err(err).Msg("MQTT connection lost")
 	}
 
 	mqttOpts.OnReconnecting = func(MQTT.Client, *MQTT.ClientOptions) {
-		log.Warn().Msg("MQTT attempting to reconnect")
+		log.Panic().Msg("MQTT attempting to reconnect")
 	}
 
 	return mqttOpts
